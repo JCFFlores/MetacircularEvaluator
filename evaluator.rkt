@@ -6,6 +6,11 @@
       (cons (eval (first-operand exps) env)
             (list-of-values (rest-operands exps) env))))
 
+(define (eval-if exp env)
+  (if (true? (eval (if-predicate exp) env))
+      (eval (if-consecuent exp) env)
+      (eval (if-alternative exp) env)))
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
