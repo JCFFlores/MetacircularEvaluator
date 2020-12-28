@@ -162,18 +162,30 @@
 (define (cond-else-clause? clause)
   (eq? (cond-predicate clause) 'else))
 
+(define cond-recipient caddr)
+
+(define cond-arrow cadr)
+
+(define (cond-extended-clause? clause)
+  (and (eq? (cond-arrow clause) '=>) (not (null? (cond-recipient clause)))))
+
 (define (expand-clauses clauses)
   (if (null? clauses)
       'false
       (let ((first (car clauses))
             (rest (cdr clauses)))
-        (if (cond-else-clause? first)
-            (if (null? rest)
-                (sequence->exp (cond-actions first))
-                (error "ELSE clause isn't last -- COND->IF" clauses))
-            (make-if (cond-predicate first)
-                     (sequence->exp (cond-actions first))
-                     (expand-clauses rest))))))
+        (cond ((cond-else-clause? first)
+               (if (null? rest)
+                   (sequence->exp (cond-actions first))
+                   (error "ELSE clause isn't last -- COND->IF" clauses)))
+              ((cond-extended-clause? first)
+               (make-if (cond-predicate first)
+                        (list (cond-recipient first) (cond-predicate first))
+                        (expand-clauses rest)))
+              (else
+               (make-if (cond-predicate first)
+                        (sequence->exp (cond-actions first))
+                        (expand-clauses rest)))))))
 
 (define (cond->if exp)
   (expand-clauses (cond-clauses exp)))
