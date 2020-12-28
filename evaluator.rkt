@@ -112,7 +112,7 @@
 
 (define application? pair?)
 
-(define make-applicaton cons)
+(define make-application cons)
 
 (define operator car)
 
