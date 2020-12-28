@@ -121,9 +121,11 @@
 
 (define let-body cddr)
 
+(define (make-assignment var exp) (list var exp))
+
 (define (expand-let assignments body)
-  (let ((parameters (map car assignments))
-        (arguments (map cadr assignments)))
+  (let ((parameters (map assignment-variable assignments))
+        (arguments (map assignment-value assignments)))
     (cons (make-lambda parameters body) arguments)))
 
 (define (let->combination exp)
@@ -141,8 +143,10 @@
 (define (expand-let* assignments body)
   (if (null? assignments)
       body
-      (make-let (list (car assignments))
-                (expand-let* (cdr assignments) body))))
+      (let ((var (assignment-variable (car assignments)))
+            (val (assignment-value (car assignments))))
+        (make-let (make-assignment var val)
+                  (expand-let* (cdr assignments) body)))))
 
 (define (let*->nested-lets exp)
   (expand-let* (let*-assignments exp) (let*-body exp)))
