@@ -29,6 +29,92 @@
     env)
   'ok)
 
+(define (self-evaluating? exp)
+  (or (number? exp) (string? exp)))
+
+(define variable? symbol?)
+
+(define (tagged-list? exp tag)
+  (and (pair? exp) (eq? (car exp) tag)))
+
+(define (quoted? exp)
+  (tagged-list? exp 'quote))
+
+(define text-of-quotation cadr)
+
+(define (assignment? exp)
+  (tagged-list? exp 'set!))
+
+(define assignment-variable cadr)
+
+(define assignment-value caddr)
+
+(define (definition? exp)
+  (tagged-list? exp 'define))
+
+(define (definition-variable exp)
+  (if (symbol? (cadr exp))
+      (cadr exp)
+      (caadr exp)))
+
+(define (definition-value exp)
+  (if (symbol? (cadr exp))
+      (caddr exp)
+      (make-lambda (cdadr exp) ; formal parameters
+                   (cddr exp)))) ; body
+
+(define (lambda? exp) (tagged-list? exp 'lambda))
+
+(define lambda-parameters cadr)
+
+(define lambda-body cddr)
+
+(define (make-lambda parameters body)
+  (cons 'lambda (cons parameters body)))
+
+(define (if? exp) (tagged-list? exp 'if))
+
+(define if-predicate cadr)
+
+(define if-consecuent caddr)
+
+(define (if-alternative exp)
+  (if (not (null? (cdddr exp)))
+      (cadddr exp)
+      'false))
+
+(define (make-if predicate consequent alternative)
+  (list 'if predicate consequent alternative))
+
+(define (begin? exp) (tagged-list? exp 'begin))
+
+(define begin-actions cdr)
+
+(define (last-exp? seq) (null? (cdr seq)))
+
+(define first-exp car)
+
+(define rest-exps cdr)
+
+(define (make-begin seq) (cons 'begin seq))
+
+(define (sequence-exp seq)
+  (cond ((null? seq) seq)
+        ((last-exp? seq) (first-exp seq))
+        (else (make-begin seq))))
+
+(define application? pair?)
+
+(define operator car)
+
+(define operands cdr)
+
+(define no-operands? null?)
+
+(define first-operand car)
+
+(define rest-operands cdr)
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
