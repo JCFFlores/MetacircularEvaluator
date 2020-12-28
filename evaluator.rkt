@@ -6,6 +6,10 @@
       (cons (eval (first-operand exps) env)
             (list-of-values (rest-operands exps) env))))
 
+(define (true? x) (not (eq? x false)))
+
+(define (false? x) (eq? x false))
+
 (define (eval-if exp env)
   (if (true? (eval (if-predicate exp) env))
       (eval (if-consecuent exp) env)
@@ -218,8 +222,8 @@
 (define and-operands cdr)
 
 (define (eval-and exp env)
-  (cond ((null? exp) 'true)
-        ((false? (eval (car exp) env)) 'false)
+  (cond ((null? exp) true)
+        ((false? (eval (car exp) env)) false)
         (else (eval-and (cdr exp) env))))
 
 (define (or? exp) (tagged-list? exp 'or))
@@ -227,8 +231,8 @@
 (define or-operands cdr)
 
 (define (eval-or exp env)
-  (cond ((null? exp) 'false)
-        ((true? (eval (car exp) env)) 'true)
+  (cond ((null? exp) false)
+        ((true? (eval (car exp) env)) true)
         (else (eval-or (cdr exp) env))))
 
 (define (eval exp env)
