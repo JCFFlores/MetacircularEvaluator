@@ -129,6 +129,24 @@
 (define (let->combination exp)
   (expand-let (let-assignments exp) (let-body exp)))
 
+(define (make-let assignments body)
+  (cons 'let (cons assignments body)))
+
+(define (let*? exp) (tagged-list? exp 'let*))
+
+(define let*-assignments cadr)
+
+(define let*-body cddr)
+
+(define (expand-let* assignments body)
+  (if (null? assignments)
+      body
+      (make-let (list (car assignments))
+                (expand-let* (cdr assignments) body))))
+
+(define (let*->nested-lets exp)
+  (expand-let* (let*-assignments exp) (let*-body exp)))
+
 (define (cond? exp) (tagged-list? exp 'cond))
 
 (define cond-clauses cdr)
@@ -182,6 +200,7 @@
         ((definition? exp) (eval-definition exp env))
         ((if? exp) (eval-if exp env))
         ((let? exp) (eval (let->combination exp) env))
+        ((let*? exp) (eval (let*->nested-lets exp) env))
         ((lambda? exp)
          (make-procedure (lambda-parameters exp)
                          (lambda-body exp)
