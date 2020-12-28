@@ -142,6 +142,24 @@
 (define (cond->if exp)
   (expand-clauses (cond-clauses exp)))
 
+(define (and? exp) (tagged-list? exp 'and))
+
+(define and-operands cdr)
+
+(define (eval-and exp env)
+  (cond ((null? exp) 'true)
+        ((false? (eval (car exp) env)) 'false)
+        (else (eval-and (cdr exp) env))))
+
+(define (or? exp) (tagged-list? exp 'or))
+
+(define or-operands cdr)
+
+(define (eval-or exp env)
+  (cond ((null? exp) 'false)
+        ((true? (eval (car exp) env)) 'true)
+        (else (eval-or (cdr exp) env))))
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
@@ -156,6 +174,8 @@
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
+        ((and? exp) (eval-and (and-operands exp) env))
+        ((or? exp) (eval-or (or-operands exp) env))
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
