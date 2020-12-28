@@ -105,6 +105,8 @@
 
 (define application? pair?)
 
+(define make-applicaton cons)
+
 (define operator car)
 
 (define operands cdr)
@@ -180,7 +182,7 @@
                    (error "ELSE clause isn't last -- COND->IF" clauses)))
               ((cond-extended-clause? first)
                (make-if (cond-predicate first)
-                        (list (cond-recipient first) (cond-predicate first))
+                        (make-application (cond-recipient first) (list (cond-predicate first)))
                         (expand-clauses rest)))
               (else
                (make-if (cond-predicate first)
