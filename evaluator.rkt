@@ -63,6 +63,9 @@
       (make-lambda (cdadr exp) ; formal parameters
                    (cddr exp)))) ; body
 
+(define (make-define-procedure name parameters body)
+  (cons 'define (cons (cons name parameters) body)))
+
 (define (lambda? exp) (tagged-list? exp 'lambda))
 
 (define lambda-parameters cadr)
@@ -123,6 +126,22 @@
 
 (define let-body cddr)
 
+(define named-let-var cadr)
+
+(define named-let-bindings caddr)
+
+(define named-let-body cdddr)
+
+(define (named-let? exp)
+  (variable? (named-let-var exp)))
+
+(define (expand-named-let var bindings body)
+  (let ((parameters (map assignment-variable bindings))
+        (arguments (map assignment-value bindings)))
+    (sequence->exp (list
+                    (make-define-procedure var parameters body)
+                    (make-application var arguments)))))
+
 (define (make-assignment var exp) (list var exp))
 
 (define (expand-let assignments body)
@@ -131,7 +150,9 @@
     (cons (make-lambda parameters body) arguments)))
 
 (define (let->combination exp)
-  (expand-let (let-assignments exp) (let-body exp)))
+  (if (named-let? exp)
+      (expand-named-let (named-let-var exp) (named-let-bindings exp) (named-let-body exp))
+      (expand-let (let-assignments exp) (let-body exp))))
 
 (define (make-let assignments body)
   (cons 'let (cons assignments body)))
