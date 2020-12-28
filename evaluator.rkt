@@ -235,6 +235,18 @@
         ((true? (eval (car exp) env)) true)
         (else (eval-or (cdr exp) env))))
 
+(define (make-procedure parameters body env)
+  (list 'procedure parameters body env))
+
+(define (compound-procedure? p)
+  (tagged-list? p 'procedure))
+
+(define procedure-parameters cadr)
+
+(define procedure-body caddr)
+
+(define procedure-environment cadddr)
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
