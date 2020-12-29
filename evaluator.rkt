@@ -72,6 +72,24 @@
 (define (make-define-procedure name parameters body)
   (cons 'define (cons (cons name parameters) body)))
 
+(define (make-unbound!? exp)
+  (tagged-list? exp 'make-unbound!))
+
+(define make-unbound!-binding cadr)
+
+(define (eval-make-unbound! var env)
+  (define (remove-binding vars vals)
+    (cond ((null? vars)
+           (error "Unbound variable -- MAKE-UNBOUND!" var))
+          ((eq? var (mcar vars)) (mcons (mcdr vars) (mcdr vals)))
+          (else
+           (let* ((data (remove-binding (mcdr vars) (mcdr vals)))
+                  (clean-vars (mcons (mcar vars) (mcar data)))
+                  (clean-vals (mcons (mcar vals) (mcdr data))))
+             (make-frame clean-vars clean-vals)))))
+  (let ((frame (first-frame env)))
+    (set! frame (remove-binding (frame-variables frame) (frame-values frame)))))
+
 (define (lambda? exp) (tagged-list? exp 'lambda))
 
 (define lambda-parameters cadr)
@@ -331,6 +349,7 @@
         ((cond? exp) (eval (cond->if exp) env))
         ((and? exp) (eval-and (and-operands exp) env))
         ((or? exp) (eval-or (or-operands exp) env))
+        ((make-unbound!? exp) (eval-make-unbound! (make-unbound!-binding exp) env))
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
