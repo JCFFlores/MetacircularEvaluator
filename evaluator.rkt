@@ -371,12 +371,12 @@
         ((or? exp) (eval-or (or-operands exp) env))
         ((make-unbound!? exp) (eval-make-unbound! (make-unbound!-binding exp) env))
         ((application? exp)
-         (apply (eval (operator exp) env)
+         (apply-exercise (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
         (else
          (error "Unknown expression type -- EVAL" exp))))
 
-(define (apply procedure arguments)
+(define (apply-exercise procedure arguments)
   (cond ((primitive-procedure? procedure)
          (apply-primitive-procedure procedure arguments))
         ((compound-procedure? procedure)
