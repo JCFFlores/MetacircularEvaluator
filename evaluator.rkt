@@ -1,5 +1,7 @@
 #lang racket
 
+(require compatibility/mlist)
+
 (define (list-of-values exps env)
   (if (no-operands? exps)
       '()
@@ -253,15 +255,21 @@
 
 (define the-empty-environment '())
 
-(define make-frame cons)
+(define (to-mlist l)
+  (cond ((mlist? l) l)
+        ((list? l) (list->mlist l))
+        (else (error "Can't convert to mlist" l))))
 
-(define frame-variables car)
+(define (make-frame variables values)
+  (mcons (to-mlist variables) (to-mlist values)))
 
-(define frame-values cdr)
+(define frame-variables mcar)
+
+(define frame-values mcdr)
 
 (define (add-binding-to-frame! var val frame)
-  (set-car! frame (cons var (car frame)))
-  (set-cdr! frame (cons val (cdr frame))))
+  (set-mcar! frame (mcons var (mcar frame)))
+  (set-mcdr! frame (mcons val (mcdr frame))))
 
 (define (extend-environment vars vals base-env)
   (if (= (length vars) (length vals))
@@ -274,8 +282,8 @@
   (define (env-loop env)
     (define (scan vars vals)
       (cond ((null? vars) (env-loop (enclosing-environment env)))
-            ((eq? var (car vars)) (car vals))
-            (else (scan (cdr vars) (cdr vals)))))
+            ((eq? var (mcar vars)) (mcar vals))
+            (else (scan (mcdr vars) (mcdr vals)))))
     (if (eq? env the-empty-environment)
         (error "Unbound variable" var)
         (let ((frame (first-frame env)))
@@ -287,8 +295,8 @@
   (define (env-loop env)
     (define (scan vars vals)
       (cond ((null? vars) (env-loop (enclosing-environment env)))
-            ((eq? var (car vars)) (set-car! vals val))
-            (else (scan (cdr vars) (cdr vals)))))
+            ((eq? var (mcar vars)) (set-mcar! vals val))
+            (else (scan (mcdr vars) (mcdr vals)))))
     (if (eq? env the-empty-environment)
         (error "Unbound variable -- SET!" var)
         (let ((frame (first-frame env)))
@@ -300,8 +308,8 @@
   (let ((frame (first-frame env)))
     (define (scan vars vals)
       (cond ((null? vars) (add-binding-to-frame! var val frame))
-            ((eq? var (car vars)) (set-car! vals val))
-            (else (scan (cdr vars) (cdr vals)))))
+            ((eq? var (mcar vars)) (set-mcar! vals val))
+            (else (scan (mcdr vars) (mcdr vals)))))
     (scan (frame-variables frame)
           (frame-values frame))))
 
