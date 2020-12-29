@@ -331,6 +331,26 @@
     (scan (frame-variables frame)
           (frame-values frame))))
 
+(define (primitive-procedure? proc)
+  (tagged-list? proc 'primitive))
+
+(define primitive-implementation cadr)
+
+(define primitive-procedures
+  (list (list 'car car)
+        (list 'cdr cdr)
+        (list 'cons cons)
+        (list 'null? null?)))
+
+(define (primitive-procedure-names)
+  (map car primitive-procedures))
+
+(define (primitive-procedure-objects)
+  (map (lambda (proc) (list 'primitive (cadr proc))) primitive-procedures))
+
+(define (apply-primitive-procedure proc args)
+  (apply (primitive-implementation proc) args))
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
