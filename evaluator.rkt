@@ -57,9 +57,9 @@
 (define (assignment? exp)
   (tagged-list? exp 'set!))
 
-(define assignment-variable car)
+(define assignment-variable cadr)
 
-(define assignment-value cadr)
+(define assignment-value caddr)
 
 (define (definition? exp)
   (tagged-list? exp 'define))
