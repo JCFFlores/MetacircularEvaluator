@@ -350,9 +350,11 @@
 (define primitive-implementation cadr)
 
 (define primitive-procedures
-  (list (list 'car car)
-        (list 'cdr cdr)
-        (list 'cons cons)
+  (list (list 'car mcar)
+        (list 'cdr mcdr)
+        (list 'cons mcons)
+        (list 'set-car! set-mcar!)
+        (list 'set-cdr! set-mcdr!)
         (list 'null? null?)
         (list '+ +)
         (list '- -)
