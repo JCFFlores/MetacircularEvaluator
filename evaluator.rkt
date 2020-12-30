@@ -94,7 +94,8 @@
                   (clean-vals (mcons (mcar vals) (mcdr data))))
              (make-frame clean-vars clean-vals)))))
   (let ((frame (first-frame env)))
-    (set! frame (remove-binding (frame-variables frame) (frame-values frame)))))
+    (set-mcar! env (remove-binding (frame-variables frame) (frame-values frame))))
+  'ok)
 
 (define (lambda? exp) (tagged-list? exp 'lambda))
 
@@ -279,9 +280,9 @@
 
 (define procedure-environment cadddr)
 
-(define enclosing-environment cdr)
+(define enclosing-environment mcdr)
 
-(define first-frame car)
+(define first-frame mcar)
 
 (define the-empty-environment '())
 
@@ -303,7 +304,7 @@
 
 (define (extend-environment vars vals base-env)
   (if (= (length vars) (length vals))
-      (cons (make-frame vars vals) base-env)
+      (mcons (make-frame vars vals) base-env)
       (if (< (length vars) (length vals))
           (error "Too many arguments supplied" vars vals)
           (error "Too few arguments supplied" vars vals))))
