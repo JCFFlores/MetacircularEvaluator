@@ -353,6 +353,8 @@
   (list (list 'car mcar)
         (list 'cdr mcdr)
         (list 'cons mcons)
+        (list 'list mlist)
+        (list 'list? mlist?)
         (list 'set-car! set-mcar!)
         (list 'set-cdr! set-mcdr!)
         (list 'null? null?)
