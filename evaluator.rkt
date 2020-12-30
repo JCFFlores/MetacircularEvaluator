@@ -177,7 +177,7 @@
 (define (expand-let assignments body)
   (let ((parameters (map assignment-variable assignments))
         (arguments (map assignment-value assignments)))
-    (cons (make-lambda parameters body) arguments)))
+    (make-application (make-lambda parameters body) arguments)))
 
 (define (let->combination exp)
   (if (named-let? exp)
@@ -193,16 +193,22 @@
 
 (define let*-body cddr)
 
+(define (last-assignment? assignments) (null? (cdr assignments)))
+
 (define (expand-let* assignments body)
-  (if (null? assignments)
-      body
-      (let ((var (assignment-variable (car assignments)))
-            (val (assignment-value (car assignments))))
-        (make-let (make-assignment var val)
-                  (expand-let* (cdr assignments) body)))))
+  (if (last-assignment? assignments)
+      (make-let assignments body)
+      (let* ((assignment (car assignments))
+             (var (assignment-variable assignment))
+             (val (assignment-value assignment)))
+        (make-let (list (make-assignment var val))
+                  (list (expand-let* (cdr assignments) body))))))
 
 (define (let*->nested-lets exp)
-  (expand-let* (let*-assignments exp) (let*-body exp)))
+  (let ((assignments (let*-assignments exp)))
+    (if (null? assignments)
+        (error "Empty bindings -- LET*" exp)
+        (expand-let* assignments (let*-body exp)))))
 
 (define (cond? exp) (tagged-list? exp 'cond))
 
