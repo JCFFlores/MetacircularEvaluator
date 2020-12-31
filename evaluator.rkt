@@ -177,11 +177,11 @@
                     (make-define-procedure var parameters body)
                     (make-application var arguments)))))
 
-(define (make-assignment var exp) (list var exp))
+(define (make-binding var exp) (list var exp))
 
-(define (expand-let assignments body)
-  (let ((parameters (map assignment-variable assignments))
-        (arguments (map assignment-value assignments)))
+(define (expand-let bindings body)
+  (let ((parameters (map binding-variable bindings))
+        (arguments (map binding-value bindings)))
     (make-application (make-lambda parameters body) arguments)))
 
 (define (let->combination exp)
@@ -198,16 +198,16 @@
 
 (define let*-body cddr)
 
-(define (last-assignment? assignments) (null? (cdr assignments)))
+(define (last-binding? assignments) (null? (cdr assignments)))
 
-(define (expand-let* assignments body)
-  (if (last-assignment? assignments)
-      (make-let assignments body)
-      (let* ((assignment (car assignments))
-             (var (assignment-variable assignment))
-             (val (assignment-value assignment)))
-        (make-let (list (make-assignment var val))
-                  (list (expand-let* (cdr assignments) body))))))
+(define (expand-let* bindings body)
+  (if (last-binding? bindings)
+      (make-let bindings body)
+      (let* ((binding (car bindings))
+             (var (binding-variable binding))
+             (val (binding-value binding)))
+        (make-let (list (make-binding var val))
+                  (list (expand-let* (cdr bindings) body))))))
 
 (define (let*->nested-lets exp)
   (let ((assignments (let*-assignments exp)))
