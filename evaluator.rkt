@@ -324,7 +324,10 @@
         (let ((frame (first-frame env)))
           (scan (frame-variables frame)
                 (frame-values frame)))))
-  (env-loop env))
+  (let ((value (env-loop env)))
+    (if (eq? value '*unassigned*)
+        (error "Variable set to unassigned" var)
+        value)))
 
 (define (set-variable-value! var val env)
   (define (env-loop env)
