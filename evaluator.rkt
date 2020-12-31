@@ -166,9 +166,13 @@
 (define (named-let? exp)
   (variable? (named-let-var exp)))
 
+(define binding-variable car)
+
+(define binding-value cadr)
+
 (define (expand-named-let var bindings body)
-  (let ((parameters (map assignment-variable bindings))
-        (arguments (map assignment-value bindings)))
+  (let ((parameters (map binding-variable bindings))
+        (arguments (map binding-value bindings)))
     (sequence->exp (list
                     (make-define-procedure var parameters body)
                     (make-application var arguments)))))
