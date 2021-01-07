@@ -4,22 +4,24 @@
          procedure-parameters
          procedure-body
          setup-environment
-         eval)
+         actual-value)
 
 (require compatibility/mlist)
 
-(define (list-of-values exps env)
-  (if (no-operands? exps)
+(define (list-of-values func)
+  (define (iter exps env)
+    (if (no-operands? exps)
       '()
-      (cons (eval (first-operand exps) env)
-            (list-of-values (rest-operands exps) env))))
+      (cons (func (first-operand exps) env)
+            (iter (rest-operands exps) env))))
+  iter)
 
 (define (true? x) (not (eq? x false)))
 
 (define (false? x) (eq? x false))
 
 (define (eval-if exp env)
-  (if (true? (eval (if-predicate exp) env))
+  (if (true? (actual-value (if-predicate exp) env))
       (eval (if-consecuent exp) env)
       (eval (if-alternative exp) env)))
 
@@ -260,7 +262,7 @@
 
 (define (eval-and exp env)
   (cond ((null? exp) true)
-        ((false? (eval (car exp) env)) false)
+        ((false? (actual-value (car exp) env)) false)
         (else (eval-and (cdr exp) env))))
 
 (define (or? exp) (tagged-list? exp 'or))
@@ -269,7 +271,7 @@
 
 (define (eval-or exp env)
   (cond ((null? exp) false)
-        ((true? (eval (car exp) env)) true)
+        ((true? (actual-value (car exp) env)) true)
         (else (eval-or (cdr exp) env))))
 
 (define (make-procedure parameters body env)
@@ -389,6 +391,42 @@
     (define-variable! 'false false initial-env)
     initial-env))
 
+(define (tagged-mlist? object tag)
+  (and (mpair? object) (eq? (mcar object) tag)))
+
+(define (delay-it exp env)
+  (mlist 'thunk exp env))
+
+(define (thunk? object)
+  (tagged-mlist? object 'thunk))
+
+(define (thunk-exp object) (mcar (mcdr object)))
+
+(define (thunk-env object) (mcar (mcdr (mcdr object))))
+
+(define (evaluated-thunk? object)
+  (tagged-mlist? object 'evaluated-thunk))
+
+(define (thunk-value object) (mcar (mcdr object)))
+
+(define (force-it object)
+  (cond ((thunk? object)
+         (let ((result (actual-value (thunk-exp object)
+                                     (thunk-env object))))
+           (set-mcar! object 'evaluated-thunk)
+           (set-mcar! (mcdr object) result)
+           (set-mcdr! (mcdr object) '())
+           result))
+        ((evaluated-thunk? object) (thunk-value object))
+        (else object)))
+
+(define (actual-value exp env)
+  (force-it (eval exp env)))
+
+(define list-of-arg-values (list-of-values actual-value))
+
+(define list-of-delayed-args (list-of-values delay-it))
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
@@ -409,18 +447,20 @@
         ((or? exp) (eval-or (or-operands exp) env))
         ((make-unbound!? exp) (eval-make-unbound! (make-unbound!-binding exp) env))
         ((application? exp)
-         (apply-exercise (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
+         (apply-exercise (actual-value (operator exp) env)
+                         (operands exp)
+                         env))
         (else
          (error "Unknown expression type -- EVAL" exp))))
 
-(define (apply-exercise procedure arguments)
+(define (apply-exercise procedure arguments env)
   (cond ((primitive-procedure? procedure)
-         (apply-primitive-procedure procedure arguments))
+         (apply-primitive-procedure procedure
+                                    (list-of-arg-values arguments env)))
         ((compound-procedure? procedure)
          (eval-sequence (procedure-body procedure)
                         (extend-environment (procedure-parameters procedure)
-                                            arguments
+                                            (list-of-delayed-args arguments env)
                                             (procedure-environment procedure))))
         (else
          (error "Unknown procedure type -- APPLY" procedure))))
