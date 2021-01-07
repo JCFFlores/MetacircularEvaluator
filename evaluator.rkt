@@ -358,14 +358,22 @@
 
 (define primitive-implementation cadr)
 
+(define (primitive-cons x y) (lambda (m) (m x y)))
+
+(define (primitive-car z) (z (lambda (p q) p)))
+
+(define (primitive-cdr z) (z (lambda (p q) q)))
+
+(define (primitive-list . elements)
+  (if (null? elements)
+      null
+      (primitive-cons (car elements) (apply primitive-list (cdr elements)))))
+
 (define primitive-procedures
-  (list (list 'car mcar)
-        (list 'cdr mcdr)
-        (list 'cons mcons)
-        (list 'list mlist)
-        (list 'list? mlist?)
-        (list 'set-car! set-mcar!)
-        (list 'set-cdr! set-mcdr!)
+  (list (list 'car primitive-car)
+        (list 'cdr primitive-cdr)
+        (list 'cons primitive-cons)
+        (list 'list primitive-list)
         (list 'null? null?)
         (list '+ +)
         (list '- -)
