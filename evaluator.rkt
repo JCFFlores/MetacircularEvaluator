@@ -358,23 +358,8 @@
 
 (define primitive-implementation cadr)
 
-(define (primitive-cons x y) (lambda (m) (m x y)))
-
-(define (primitive-car z) (z (lambda (p q) p)))
-
-(define (primitive-cdr z) (z (lambda (p q) q)))
-
-(define (primitive-list . elements)
-  (if (null? elements)
-      null
-      (primitive-cons (car elements) (apply primitive-list (cdr elements)))))
-
 (define primitive-procedures
-  (list (list 'car primitive-car)
-        (list 'cdr primitive-cdr)
-        (list 'cons primitive-cons)
-        (list 'list primitive-list)
-        (list 'null? null?)
+  (list (list 'null? null?)
         (list '+ +)
         (list '- -)
         (list '* *)
@@ -399,6 +384,24 @@
                              the-empty-environment)))
     (define-variable! 'true true initial-env)
     (define-variable! 'false false initial-env)
+    (define-variable!
+      'cons
+      (make-procedure '(x y)
+                      '((lambda (m) (m x y)))
+                      initial-env)
+      initial-env)
+    (define-variable!
+      'car
+      (make-procedure '(z)
+                      '((z (lambda (p q) p)))
+                      initial-env)
+      initial-env)
+    (define-variable!
+      'cdr
+      (make-procedure '(z)
+                      '((z (lambda (p q) q)))
+                      initial-env)
+      initial-env)
     initial-env))
 
 (define (tagged-mlist? object tag)
